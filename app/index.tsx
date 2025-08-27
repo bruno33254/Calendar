@@ -271,25 +271,25 @@ export default function HomePage() {
       {/* Assessment Details Modal */}
       {showDetails && selectedDay && (
         <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>
+          <View style={[styles.modalContent, isDarkMode && styles.modalContentDark]}>
+            <View style={[styles.modalHeader, isDarkMode && styles.modalHeaderDark]}>
+              <Text style={[styles.modalTitle, isDarkMode && styles.modalTitleDark]}>
                 📅 Assessments for {formatDate(selectedDay.date)}
               </Text>
               <TouchableOpacity 
-                style={styles.closeButton}
+                style={[styles.closeButton, isDarkMode && styles.closeButtonDark]}
                 onPress={() => {
                   setShowDetails(false);
                   setSelectedDay(null);
                 }}
               >
-                <Text style={styles.closeButtonText}>✕</Text>
+                <Text style={[styles.closeButtonText, isDarkMode && styles.closeButtonTextDark]}>✕</Text>
               </TouchableOpacity>
             </View>
             
             <ScrollView style={styles.modalBody}>
               {getAssessmentsForDate(selectedDay.date).map((assessment, index) => (
-                <View key={assessment.ID} style={styles.assessmentCard}>
+                <View key={assessment.ID} style={[styles.assessmentCard, isDarkMode && styles.assessmentCardDark]}>
                   <View style={styles.assessmentHeader}>
                     <View 
                       style={[
@@ -297,16 +297,16 @@ export default function HomePage() {
                         { backgroundColor: assessment.color }
                       ]} 
                     />
-                    <Text style={styles.assessmentName}>{assessment.name}</Text>
+                    <Text style={[styles.assessmentName, isDarkMode && styles.assessmentNameDark]}>{assessment.name}</Text>
                   </View>
                   
-                  <Text style={styles.assessmentDescription}>
+                  <Text style={[styles.assessmentDescription, isDarkMode && styles.assessmentDescriptionDark]}>
                     {assessment.description}
                   </Text>
                   
                   <View style={styles.dateContainer}>
-                    <Text style={styles.dateLabel}>📅 Submit Date:</Text>
-                    <Text style={styles.dateValue}>
+                    <Text style={[styles.dateLabel, isDarkMode && styles.dateLabelDark]}>📅 Submit Date:</Text>
+                    <Text style={[styles.dateValue, isDarkMode && styles.dateValueDark]}>
                       {formatDateSimple(assessment.submit_date)}
                     </Text>
                   </View>
@@ -496,6 +496,9 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 8,
   },
+  modalContentDark: {
+    backgroundColor: '#2C2C2E',
+  },
   modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -504,11 +507,17 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#E5E5EA',
   },
+  modalHeaderDark: {
+    borderBottomColor: '#38383A',
+  },
   modalTitle: {
     fontSize: 20,
     fontWeight: 'bold',
     color: '#1C1C1E',
     flex: 1,
+  },
+  modalTitleDark: {
+    color: '#FFFFFF',
   },
   closeButton: {
     width: 32,
@@ -518,10 +527,16 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  closeButtonDark: {
+    backgroundColor: '#38383A',
+  },
   closeButtonText: {
     fontSize: 18,
     color: '#8E8E93',
     fontWeight: 'bold',
+  },
+  closeButtonTextDark: {
+    color: '#FFFFFF',
   },
   modalBody: {
     padding: 20,
@@ -533,6 +548,9 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     borderLeftWidth: 4,
     borderLeftColor: '#007AFF',
+  },
+  assessmentCardDark: {
+    backgroundColor: '#1F1F20',
   },
   assessmentHeader: {
     flexDirection: 'row',
@@ -551,11 +569,17 @@ const styles = StyleSheet.create({
     color: '#1C1C1E',
     flex: 1,
   },
+  assessmentNameDark: {
+    color: '#FFFFFF',
+  },
   assessmentDescription: {
     fontSize: 16,
     color: '#3A3A3C',
     lineHeight: 22,
     marginBottom: 16,
+  },
+  assessmentDescriptionDark: {
+    color: '#D1D1D6',
   },
   dateContainer: {
     flexDirection: 'row',
@@ -567,9 +591,15 @@ const styles = StyleSheet.create({
     color: '#8E8E93',
     fontWeight: '500',
   },
+  dateLabelDark: {
+    color: '#AEAEB2',
+  },
   dateValue: {
     fontSize: 16,
     color: '#1C1C1E',
     fontWeight: 'bold',
+  },
+  dateValueDark: {
+    color: '#FFFFFF',
   },
 });

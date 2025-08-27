@@ -48,19 +48,19 @@ export default function ListScreen() {
   }, []);
 
   const renderItem = ({ item }: { item: Assessment }) => (
-    <View style={styles.card}>
+    <View style={[styles.card, isDarkMode && styles.cardDark]}>
       <View style={styles.cardHeader}>
         <View style={[styles.colorDot, { backgroundColor: item.color }]} />
-        <Text style={styles.cardTitle}>{item.name}</Text>
+        <Text style={[styles.cardTitle, isDarkMode && styles.cardTitleDark]}>{item.name}</Text>
       </View>
       {!!item.description && (
-        <Text style={styles.cardDescription} numberOfLines={3}>
+        <Text style={[styles.cardDescription, isDarkMode && styles.cardDescriptionDark]} numberOfLines={3}>
           {item.description}
         </Text>
       )}
       <View style={styles.cardFooter}>
-        <Text style={styles.cardDateLabel}>Submit date</Text>
-        <Text style={styles.cardDate}>{formatDateSimple(item.submit_date)}</Text>
+        <Text style={[styles.cardDateLabel, isDarkMode && styles.cardDateLabelDark]}>Submit date</Text>
+        <Text style={[styles.cardDate, isDarkMode && styles.cardDateDark]}>{formatDateSimple(item.submit_date)}</Text>
       </View>
     </View>
   );
@@ -188,6 +188,22 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '700',
     color: '#1C1C1E',
+  },
+  // Dark mode overrides for cards
+  cardDark: {
+    backgroundColor: '#2C2C2E',
+  },
+  cardTitleDark: {
+    color: '#FFFFFF',
+  },
+  cardDescriptionDark: {
+    color: '#D1D1D6',
+  },
+  cardDateLabelDark: {
+    color: '#AEAEB2',
+  },
+  cardDateDark: {
+    color: '#FFFFFF',
   },
   separator: {
     height: 12,
