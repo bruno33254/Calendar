@@ -1,11 +1,14 @@
 import { Tabs } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
 import React from 'react';
 import { Text } from 'react-native';
-import { DarkModeProvider } from './contexts/DarkModeContext';
+import { DarkModeProvider, useDarkMode } from './contexts/DarkModeContext';
 
-export default function Layout() {
+function ThemedTabs() {
+  const { isDarkMode } = useDarkMode();
   return (
-    <DarkModeProvider>
+    <>
+      <StatusBar style={isDarkMode ? 'light' : 'dark'} backgroundColor={isDarkMode ? '#1C1C1E' : '#FFFFFF'} />
       <Tabs screenOptions={{
         headerShown: false,
         tabBarActiveTintColor: '#007AFF',
@@ -35,6 +38,14 @@ export default function Layout() {
           }}
         />
       </Tabs>
+    </>
+  );
+}
+
+export default function Layout() {
+  return (
+    <DarkModeProvider>
+      <ThemedTabs />
     </DarkModeProvider>
   );
 }
