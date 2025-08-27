@@ -23,6 +23,18 @@ export default function HomePage() {
   // Get today's date
   const today = new Date();
   
+  // Compute the calendar range: 2 weeks before today, total 77 days
+  const calendarStartDate = React.useMemo(() => {
+    const d = new Date(today);
+    d.setDate(today.getDate() - 14);
+    return d;
+  }, [today]);
+  const calendarEndDate = React.useMemo(() => {
+    const d = new Date(calendarStartDate);
+    d.setDate(calendarStartDate.getDate() + 76); // inclusive end
+    return d;
+  }, [calendarStartDate]);
+  
   // State for assessments
   const [assessments, setAssessments] = React.useState<Assessment[]>([]);
   const [loading, setLoading] = React.useState(true);
@@ -36,9 +48,8 @@ export default function HomePage() {
   const generateCalendarDays = (): CalendarDay[] => {
     const days: CalendarDay[] = [];
     
-    // Start from 2 weeks ago (14 days back from today)
-    const startDate = new Date();
-    startDate.setDate(today.getDate() - 14);
+    // Use the shared calendarStartDate
+    const startDate = calendarStartDate;
     
     // Generate 77 days (11 weeks total)
     for (let i = 0; i < 77; i++) {
@@ -185,7 +196,7 @@ export default function HomePage() {
       <View style={[styles.header, isDarkMode && styles.headerDark]}>
         <Text style={[styles.title, isDarkMode && styles.titleDark]}>Calendar</Text>
         <Text style={[styles.subtitle, isDarkMode && styles.subtitleDark]}>
-          {formatDate(today)} - {formatDate(new Date(today.getFullYear(), today.getMonth(), today.getDate() + 48))}
+          {formatDate(calendarStartDate)} - {formatDate(calendarEndDate)}
         </Text>
         {loading && (
           <Text style={[styles.loadingText, isDarkMode && styles.loadingTextDark]}>Loading assessments...</Text>
