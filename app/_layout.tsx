@@ -1,41 +1,35 @@
-import { Ionicons } from "@expo/vector-icons";
-import { Tabs } from "expo-router";
+import { Tabs } from 'expo-router';
+import React from 'react';
+import { Text } from 'react-native';
 
-export default function RootLayout() {
+export default function Layout() {
   return (
-    <Tabs
-      screenOptions={{
-        tabBarActiveTintColor: "#007AFF",
-        tabBarInactiveTintColor: "#8E8E93",
-        tabBarStyle: {
-          backgroundColor: "#FFFFFF",
-          borderTopWidth: 1,
-          borderTopColor: "#E5E5EA",
-        },
-        headerStyle: {
-          backgroundColor: "#FFFFFF",
-        },
-        headerTitleStyle: {
-          fontWeight: "bold",
-        },
-      }}
-    >
+    <Tabs screenOptions={{
+      headerShown: false,
+      tabBarActiveTintColor: '#007AFF',
+    }}>
       <Tabs.Screen
         name="index"
         options={{
-          title: "Calendar",
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="calendar" size={size} color={color} />
-          ),
+          title: 'Calendar',
+          tabBarIcon: ({ color }) => <Text style={{ color }}>🗓️</Text>,
+          tabBarLabel: 'Calendar',
+        }}
+      />
+      <Tabs.Screen
+        name="list"
+        options={{
+          title: 'List',
+          tabBarIcon: ({ color }) => <Text style={{ color }}>📋</Text>,
+          tabBarLabel: 'List',
         }}
       />
       <Tabs.Screen
         name="settings"
         options={{
-          title: "Settings",
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="settings" size={size} color={color} />
-          ),
+          title: 'Settings',
+          tabBarIcon: ({ color }) => <Text style={{ color }}>⚙️</Text>,
+          tabBarLabel: 'Settings',
         }}
       />
     </Tabs>
