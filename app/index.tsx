@@ -71,13 +71,22 @@ export default function HomePage() {
     return `${date.getDate()} ${getMonthName(date.getMonth())}, ${date.getFullYear()}`;
   };
 
-  // Format date as dd-mm-yyyy for assessment details
+  // Format date as dd-mm-yyyy for assessment details without timezone shifts
   const formatDateSimple = (dateString: string) => {
-    const date = new Date(dateString);
-    const day = date.getDate().toString().padStart(2, '0');
-    const month = (date.getMonth() + 1).toString().padStart(2, '0');
-    const year = date.getFullYear();
-    return `${day}-${month}-${year}`;
+    if (!dateString) return '';
+    const raw = String(dateString).trim();
+    const yyyyMmDd = raw.includes('T') ? raw.split('T')[0] : raw.split(' ')[0];
+    const [y, m, d] = yyyyMmDd.split('-');
+    if (!y || !m || !d) return raw;
+    return `${d.padStart(2, '0')}-${m.padStart(2, '0')}-${y}`;
+  };
+
+  // Format Date object to local YYYY-MM-DD (avoid timezone shifting)
+  const toLocalYmd = (date: Date) => {
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const d = String(date.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
   };
 
   // Group days into weeks aligned to Sunday-Saturday columns
@@ -143,12 +152,14 @@ export default function HomePage() {
 
   // Helper function to get assessments for a specific date      
   const getAssessmentsForDate = (date: Date): Assessment[] => {
-  const dateString = date.toISOString().split('T')[0];
-  return assessments.filter(assessment => {
-    const dbDate = new Date(assessment.submit_date).toISOString().split('T')[0];
-    return dbDate === dateString;
-  });
-};
+    const dateString = toLocalYmd(date); // local YYYY-MM-DD
+    return assessments.filter(assessment => {
+      // Use raw date part from DB string to avoid timezone conversion
+      const raw = String(assessment.submit_date);
+      const dbDate = raw.includes('T') ? raw.split('T')[0] : raw.split(' ')[0];
+      return dbDate === dateString;
+    });
+  };
 
 
   // Helper function to check if a date is in the future
@@ -223,13 +234,13 @@ export default function HomePage() {
                   >
                     {day ? (
                       <>
-                                              <Text style={[
-                        styles.dayText,
-                        isDarkMode && styles.dayTextDark,
-                        day.isToday && styles.todayText
-                      ]}>
-                        {day.day}
-                      </Text>
+                        <Text style={[
+                          styles.dayText,
+                          isDarkMode && styles.dayTextDark,
+                          day.isToday && styles.todayText
+                        ]}>
+                          {day.day}
+                        </Text>
                         
                         {/* Show assessments for this day */}
                         {getAssessmentsForDate(day.date).map((assessment, index) => (
@@ -328,7 +339,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#2C2C2E",
     borderBottomColor: "#38383A",
   },
-
+ 
   title: {
     fontSize: 28,
     fontWeight: "bold",

@@ -11,11 +11,12 @@ interface Assessment {
 }
 
 const formatDateSimple = (dateString: string) => {
-  const date = new Date(dateString);
-  const day = date.getDate().toString().padStart(2, '0');
-  const month = (date.getMonth() + 1).toString().padStart(2, '0');
-  const year = date.getFullYear();
-  return `${day}-${month}-${year}`;
+  if (!dateString) return '';
+  const raw = String(dateString).trim();
+  const yyyyMmDd = raw.includes('T') ? raw.split('T')[0] : raw.split(' ')[0];
+  const [y, m, d] = yyyyMmDd.split('-');
+  if (!y || !m || !d) return raw;
+  return `${d.padStart(2, '0')}-${m.padStart(2, '0')}-${y}`;
 };
 
 export default function ListScreen() {
