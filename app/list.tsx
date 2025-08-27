@@ -1,5 +1,6 @@
 import React from "react";
 import { ActivityIndicator, FlatList, SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { useDarkMode } from "./contexts/DarkModeContext";
 
 interface Assessment {
   ID: number;
@@ -18,6 +19,7 @@ const formatDateSimple = (dateString: string) => {
 };
 
 export default function ListScreen() {
+  const { isDarkMode } = useDarkMode();
   const [assessments, setAssessments] = React.useState<Assessment[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
@@ -63,9 +65,9 @@ export default function ListScreen() {
   );
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Assessments</Text>
+    <SafeAreaView style={[styles.container, isDarkMode && styles.containerDark]}>
+      <View style={[styles.header, isDarkMode && styles.headerDark]}>
+        <Text style={[styles.title, isDarkMode && styles.titleDark]}>Assessments</Text>
         <TouchableOpacity onPress={fetchAssessments} style={styles.refreshBtn}>
           <Text style={styles.refreshText}>Refresh</Text>
         </TouchableOpacity>
@@ -101,6 +103,9 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#F8F9FA',
   },
+  containerDark: {
+    backgroundColor: '#1C1C1E',
+  },
   header: {
     paddingHorizontal: 16,
     paddingVertical: 30,
@@ -111,10 +116,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
   },
+  headerDark: {
+    backgroundColor: '#2C2C2E',
+    borderBottomColor: '#38383A',
+  },
   title: {
     fontSize: 22,
     fontWeight: '700',
     color: '#1C1C1E',
+  },
+  titleDark: {
+    color: '#FFFFFF',
   },
   refreshBtn: {
     paddingHorizontal: 12,

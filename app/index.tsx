@@ -1,5 +1,6 @@
 import React from "react";
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { useDarkMode } from "./contexts/DarkModeContext";
 
 interface CalendarDay {
   day: number;
@@ -28,13 +29,8 @@ export default function HomePage() {
   const [selectedDay, setSelectedDay] = React.useState<CalendarDay | null>(null);
   const [showDetails, setShowDetails] = React.useState(false);
   
-  // Dark mode state - manual toggle only
-  const [isDarkMode, setIsDarkMode] = React.useState(false);
-  
-  // Toggle dark mode
-  const toggleDarkMode = () => {
-    setIsDarkMode(!isDarkMode);
-  };
+  // Dark mode from context
+  const { isDarkMode } = useDarkMode();
 
   // Generate 77 days (11 weeks) total: 2 weeks before + 7 weeks visible + 2 weeks after
   const generateCalendarDays = (): CalendarDay[] => {
@@ -176,17 +172,7 @@ export default function HomePage() {
   return (
     <View style={[styles.container, isDarkMode && styles.containerDark]}>
       <View style={[styles.header, isDarkMode && styles.headerDark]}>
-        <View style={styles.headerTop}>
-          <Text style={[styles.title, isDarkMode && styles.titleDark]}>Calendar</Text>
-          <TouchableOpacity 
-            style={[styles.darkModeToggle, isDarkMode && styles.darkModeToggleActive]} 
-            onPress={toggleDarkMode}
-          >
-            <Text style={styles.darkModeToggleText}>
-              {isDarkMode ? '🌙' : '☀️'}
-            </Text>
-          </TouchableOpacity>
-        </View>
+        <Text style={[styles.title, isDarkMode && styles.titleDark]}>Calendar</Text>
         <Text style={[styles.subtitle, isDarkMode && styles.subtitleDark]}>
           {formatDate(today)} - {formatDate(new Date(today.getFullYear(), today.getMonth(), today.getDate() + 48))}
         </Text>
@@ -342,26 +328,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#2C2C2E",
     borderBottomColor: "#38383A",
   },
-  headerTop: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  darkModeToggle: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#F2F2F7',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  darkModeToggleActive: {
-    backgroundColor: '#38383A',
-  },
-  darkModeToggleText: {
-    fontSize: 18,
-  },
+
   title: {
     fontSize: 28,
     fontWeight: "bold",

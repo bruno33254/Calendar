@@ -1,188 +1,60 @@
-import { Ionicons } from "@expo/vector-icons";
-import React, { useState } from "react";
-import {
-  Alert,
-  ScrollView,
-  StyleSheet,
-  Switch,
-  Text,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import React from "react";
+import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { useDarkMode } from "./contexts/DarkModeContext";
 
-export default function SettingsPage() {
-  const [darkMode, setDarkMode] = useState(false);
-  const [notifications, setNotifications] = useState(true);
-  const [soundEnabled, setSoundEnabled] = useState(true);
-  const [vibrationEnabled, setVibrationEnabled] = useState(true);
-  const [autoBackup, setAutoBackup] = useState(false);
-
-  const handleSettingPress = (settingName: string) => {
-    Alert.alert(
-      settingName,
-      `This would open ${settingName} settings.`,
-      [{ text: "OK" }]
-    );
-  };
-
-  const SettingItem = ({
-    icon,
-    title,
-    subtitle,
-    onPress,
-    showSwitch = false,
-    switchValue = false,
-    onSwitchChange = () => {},
-    showArrow = true,
-  }: {
-    icon: string;
-    title: string;
-    subtitle?: string;
-    onPress?: () => void;
-    showSwitch?: boolean;
-    switchValue?: boolean;
-    onSwitchChange?: (value: boolean) => void;
-    showArrow?: boolean;
-  }) => (
-    <TouchableOpacity
-      style={styles.settingItem}
-      onPress={onPress}
-      disabled={showSwitch}
-    >
-      <View style={styles.settingLeft}>
-        <View style={styles.iconContainer}>
-          <Ionicons name={icon as any} size={20} color="#007AFF" />
-        </View>
-        <View style={styles.settingText}>
-          <Text style={styles.settingTitle}>{title}</Text>
-          {subtitle && (
-            <Text style={styles.settingSubtitle}>{subtitle}</Text>
-          )}
-        </View>
-      </View>
-      <View style={styles.settingRight}>
-        {showSwitch ? (
-          <Switch
-            value={switchValue}
-            onValueChange={onSwitchChange}
-            trackColor={{ false: "#E5E5EA", true: "#007AFF" }}
-            thumbColor="#FFFFFF"
-          />
-        ) : (
-          showArrow && (
-            <Ionicons name="chevron-forward" size={20} color="#C7C7CC" />
-          )
-        )}
-      </View>
-    </TouchableOpacity>
-  );
+export default function SettingsScreen() {
+  const { isDarkMode, toggleDarkMode } = useDarkMode();
 
   return (
-    <ScrollView style={styles.container}>
+    <View style={[styles.container, isDarkMode && styles.containerDark]}>
+      <View style={[styles.header, isDarkMode && styles.headerDark]}>
+        <Text style={[styles.title, isDarkMode && styles.titleDark]}>Settings</Text>
+      </View>
       
-
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Notifications</Text>
-        <View style={styles.sectionContent}>
-          <SettingItem
-            icon="notifications"
-            title="Push Notifications"
-            subtitle="Receive notifications for events"
-            showSwitch={true}
-            switchValue={notifications}
-            onSwitchChange={setNotifications}
-            showArrow={false}
-          />
-          <SettingItem
-            icon="volume-high"
-            title="Sound"
-            subtitle="Play sounds for notifications"
-            showSwitch={true}
-            switchValue={soundEnabled}
-            onSwitchChange={setSoundEnabled}
-            showArrow={false}
-          />
-          <SettingItem
-            icon="phone-portrait"
-            title="Vibration"
-            subtitle="Vibrate for notifications"
-            showSwitch={true}
-            switchValue={vibrationEnabled}
-            onSwitchChange={setVibrationEnabled}
-            showArrow={false}
-          />
+      <View style={[styles.settingsContainer, isDarkMode && styles.settingsContainerDark]}>
+        <View style={styles.settingItem}>
+          <View style={styles.settingInfo}>
+            <Text style={[styles.settingTitle, isDarkMode && styles.settingTitleDark]}>
+              Dark Mode
+            </Text>
+            <Text style={[styles.settingDescription, isDarkMode && styles.settingDescriptionDark]}>
+              Switch between light and dark themes
+            </Text>
+          </View>
+          
+          <TouchableOpacity 
+            style={[styles.darkModeToggle, isDarkMode && styles.darkModeToggleActive]} 
+            onPress={toggleDarkMode}
+          >
+            <Text style={styles.darkModeToggleText}>
+              {isDarkMode ? '🌙' : '☀️'}
+            </Text>
+          </TouchableOpacity>
+        </View>
+        
+        <View style={[styles.settingItem, styles.settingItemBorder, isDarkMode && styles.settingItemBorderDark]}>
+          <View style={styles.settingInfo}>
+            <Text style={[styles.settingTitle, isDarkMode && styles.settingTitleDark]}>
+              App Version
+            </Text>
+            <Text style={[styles.settingDescription, isDarkMode && styles.settingDescriptionDark]}>
+              Calendar App v1.0.0
+            </Text>
+          </View>
+        </View>
+        
+        <View style={[styles.settingItem, styles.settingItemBorder, isDarkMode && styles.settingItemBorderDark]}>
+          <View style={styles.settingInfo}>
+            <Text style={[styles.settingTitle, isDarkMode && styles.settingTitleDark]}>
+              Database
+            </Text>
+            <Text style={[styles.settingDescription, isDarkMode && styles.settingDescriptionDark]}>
+              MySQL - calendarapp
+            </Text>
+          </View>
         </View>
       </View>
-
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Data & Storage</Text>
-        <View style={styles.sectionContent}>
-          <SettingItem
-            icon="cloud-upload"
-            title="Auto Backup"
-            subtitle="Automatically backup your calendar data"
-            showSwitch={true}
-            switchValue={autoBackup}
-            onSwitchChange={setAutoBackup}
-            showArrow={false}
-          />
-          <SettingItem
-            icon="download"
-            title="Export Data"
-            subtitle="Export your calendar data"
-            onPress={() => handleSettingPress("Export Data")}
-          />
-          <SettingItem
-            icon="trash"
-            title="Clear Data"
-            subtitle="Delete all calendar data"
-            onPress={() => handleSettingPress("Clear Data")}
-          />
-        </View>
-      </View>
-
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Support</Text>
-        <View style={styles.sectionContent}>
-          <SettingItem
-            icon="help-circle"
-            title="Help & Support"
-            subtitle="Get help with the app"
-            onPress={() => handleSettingPress("Help & Support")}
-          />
-          <SettingItem
-            icon="document-text"
-            title="Privacy Policy"
-            subtitle="Read our privacy policy"
-            onPress={() => handleSettingPress("Privacy Policy")}
-          />
-          <SettingItem
-            icon="document"
-            title="Terms of Service"
-            subtitle="Read our terms of service"
-            onPress={() => handleSettingPress("Terms of Service")}
-          />
-        </View>
-      </View>
-
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>About</Text>
-        <View style={styles.sectionContent}>
-          <SettingItem
-            icon="information-circle"
-            title="App Version"
-            subtitle="1.0.0"
-            showArrow={false}
-          />
-          <SettingItem
-            icon="star"
-            title="Rate App"
-            subtitle="Rate us on the App Store"
-            onPress={() => handleSettingPress("Rate App")}
-          />
-        </View>
-      </View>
-    </ScrollView>
+    </View>
   );
 }
 
@@ -191,58 +63,89 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#F8F9FA",
   },
-  section: {
-    marginTop: 20,
+  containerDark: {
+    backgroundColor: "#1C1C1E",
   },
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#8E8E93",
-    marginLeft: 20,
-    marginBottom: 8,
-  },
-  sectionContent: {
+  header: {
+    padding: 20,
     backgroundColor: "#FFFFFF",
-    borderTopWidth: 1,
     borderBottomWidth: 1,
-    borderColor: "#E5E5EA",
+    borderBottomColor: "#E5E5EA",
+  },
+  headerDark: {
+    backgroundColor: "#2C2C2E",
+    borderBottomColor: "#38383A",
+  },
+  title: {
+    fontSize: 28,
+    fontWeight: "bold",
+    color: "#1C1C1E",
+  },
+  titleDark: {
+    color: "#FFFFFF",
+  },
+  settingsContainer: {
+    backgroundColor: "#FFFFFF",
+    margin: 16,
+    borderRadius: 12,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  settingsContainerDark: {
+    backgroundColor: "#2C2C2E",
+    shadowColor: "#000",
+    shadowOpacity: 0.3,
   },
   settingItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    backgroundColor: "#FFFFFF",
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 20,
   },
-  settingLeft: {
-    flexDirection: "row",
-    alignItems: "center",
-    flex: 1,
+  settingItemBorder: {
+    borderTopWidth: 1,
+    borderTopColor: '#E5E5EA',
   },
-  iconContainer: {
-    width: 32,
-    height: 32,
-    borderRadius: 8,
-    backgroundColor: "#F2F2F7",
-    justifyContent: "center",
-    alignItems: "center",
-    marginRight: 12,
+  settingItemBorderDark: {
+    borderTopColor: '#38383A',
   },
-  settingText: {
+  settingInfo: {
     flex: 1,
   },
   settingTitle: {
-    fontSize: 16,
-    fontWeight: "500",
-    color: "#1C1C1E",
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#1C1C1E',
+    marginBottom: 4,
   },
-  settingSubtitle: {
+  settingTitleDark: {
+    color: '#FFFFFF',
+  },
+  settingDescription: {
     fontSize: 14,
-    color: "#8E8E93",
-    marginTop: 2,
+    color: '#8E8E93',
   },
-  settingRight: {
-    alignItems: "center",
+  settingDescriptionDark: {
+    color: '#AEAEB2',
+  },
+  darkModeToggle: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: '#F2F2F7',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  darkModeToggleActive: {
+    backgroundColor: '#38383A',
+  },
+  darkModeToggleText: {
+    fontSize: 20,
   },
 }); 
