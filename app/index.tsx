@@ -1,5 +1,6 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import React from "react";
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Alert, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { useDarkMode } from "./contexts/DarkModeContext";
 
 interface CalendarDay {
@@ -23,6 +24,11 @@ interface NotificationPreference {
   assessmentId: number;
   enabled: boolean;
   daysBefore: number;
+}
+
+interface AssessmentNotes {
+  assessmentId: number;
+  notes: string;
 }
 
 export default function HomePage() {
@@ -49,6 +55,10 @@ export default function HomePage() {
   
   // Notification preferences state
   const [notificationPreferences, setNotificationPreferences] = React.useState<NotificationPreference[]>([]);
+  
+  // Notes state
+  const [assessmentNotes, setAssessmentNotes] = React.useState<AssessmentNotes[]>([]);
+  const [editingNotes, setEditingNotes] = React.useState<{ [key: number]: string }>({});
   
   // Dark mode from context
   const { isDarkMode } = useDarkMode();
@@ -146,6 +156,49 @@ export default function HomePage() {
 
   const weeks = groupDaysIntoWeeks(calendarDays);
 
+  // Load notes from AsyncStorage
+  const loadNotes = async () => {
+    try {
+      const savedNotes = await AsyncStorage.getItem('assessmentNotes');
+      if (savedNotes) {
+        setAssessmentNotes(JSON.parse(savedNotes));
+      }
+    } catch (error) {
+      console.error('Error loading notes:', error);
+    }
+  };
+
+  // Save notes to AsyncStorage
+  const saveNotes = async (notes: AssessmentNotes[]) => {
+    try {
+      await AsyncStorage.setItem('assessmentNotes', JSON.stringify(notes));
+    } catch (error) {
+      console.error('Error saving notes:', error);
+      Alert.alert('Error', 'Failed to save notes');
+    }
+  };
+
+  // Get notes for a specific assessment
+  const getNotesForAssessment = (assessmentId: number): string => {
+    const note = assessmentNotes.find(n => n.assessmentId === assessmentId);
+    return note ? note.notes : '';
+  };
+
+  // Update notes for an assessment
+  const updateNotes = (assessmentId: number, notes: string) => {
+    const newNotes = [...assessmentNotes];
+    const existingIndex = newNotes.findIndex(n => n.assessmentId === assessmentId);
+    
+    if (existingIndex >= 0) {
+      newNotes[existingIndex].notes = notes;
+    } else {
+      newNotes.push({ assessmentId, notes });
+    }
+    
+    setAssessmentNotes(newNotes);
+    saveNotes(newNotes);
+  };
+
   // API functions
   const fetchAssessments = async () => {
     try {
@@ -175,6 +228,7 @@ export default function HomePage() {
   // Fetch assessments on component mount
   React.useEffect(() => {
     fetchAssessments();
+    loadNotes();
   }, []);
 
   // Helper function to get assessments for a specific date      
@@ -339,6 +393,9 @@ export default function HomePage() {
             <ScrollView style={styles.modalBody}>
               {getAssessmentsForDate(selectedDay.date).map((assessment, index) => {
                 const notificationPref = getNotificationPreference(assessment.ID);
+                const currentNotes = getNotesForAssessment(assessment.ID);
+                const isEditing = editingNotes[assessment.ID] !== undefined;
+                
                 return (
                   <View key={assessment.ID} style={[styles.assessmentCard, isDarkMode && styles.assessmentCardDark]}>
                     <View style={styles.assessmentHeader}>
@@ -360,6 +417,66 @@ export default function HomePage() {
                       <Text style={[styles.dateValue, isDarkMode && styles.dateValueDark]}>
                         {formatDateSimple(assessment.submit_date)}
                       </Text>
+                    </View>
+                    
+                    {/* Notes Section */}
+                    <View style={styles.notesContainer}>
+                      <View style={styles.notesHeader}>
+                        <Text style={[styles.notesLabel, isDarkMode && styles.notesLabelDark]}>
+                          📝 Notes
+                        </Text>
+                        <TouchableOpacity
+                          style={[styles.notesEditButton, isDarkMode && styles.notesEditButtonDark]}
+                          onPress={() => {
+                            if (isEditing) {
+                              // Save notes
+                              const notesToSave = editingNotes[assessment.ID] || '';
+                              updateNotes(assessment.ID, notesToSave);
+                              setEditingNotes(prev => {
+                                const newState = { ...prev };
+                                delete newState[assessment.ID];
+                                return newState;
+                              });
+                            } else {
+                              // Start editing
+                              setEditingNotes(prev => ({
+                                ...prev,
+                                [assessment.ID]: currentNotes
+                              }));
+                            }
+                          }}
+                        >
+                          <Text style={[styles.notesEditButtonText, isDarkMode && styles.notesEditButtonTextDark]}>
+                            {isEditing ? 'Save' : 'Edit'}
+                          </Text>
+                        </TouchableOpacity>
+                      </View>
+                      
+                      {isEditing ? (
+                        <TextInput
+                          style={[
+                            styles.notesInput,
+                            isDarkMode && styles.notesInputDark
+                          ]}
+                          value={editingNotes[assessment.ID] || ''}
+                          onChangeText={(text) => setEditingNotes(prev => ({
+                            ...prev,
+                            [assessment.ID]: text
+                          }))}
+                          placeholder="Write your notes here..."
+                          placeholderTextColor={isDarkMode ? '#AEAEB2' : '#8E8E93'}
+                          multiline
+                          numberOfLines={4}
+                        />
+                      ) : (
+                        <Text style={[
+                          styles.notesText,
+                          isDarkMode && styles.notesTextDark,
+                          !currentNotes && styles.notesPlaceholder
+                        ]}>
+                          {currentNotes || 'No notes yet. Tap Edit to add notes.'}
+                        </Text>
+                      )}
                     </View>
                     
                     {/* Notification Settings */}
@@ -819,5 +936,98 @@ const styles = StyleSheet.create({
   },
   notificationToggleButtonTextActiveDark: {
     color: '#FFFFFF',
+  },
+  // Notes styles
+  notesContainer: {
+    marginTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: '#E5E5EA',
+    paddingTop: 16,
+  },
+  notesHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  notesLabel: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1C1C1E',
+  },
+  notesLabelDark: {
+    color: '#FFFFFF',
+  },
+  notesEditButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    backgroundColor: '#F2F2F7',
+    borderWidth: 1,
+    borderColor: '#E5E5EA',
+  },
+  notesEditButtonDark: {
+    backgroundColor: '#38383A',
+    borderColor: '#48484A',
+  },
+  notesEditButtonText: {
+    fontSize: 12,
+    fontWeight: '500',
+    color: '#8E8E93',
+  },
+  notesEditButtonTextDark: {
+    color: '#AEAEB2',
+  },
+  notesInput: {
+    fontSize: 14,
+    color: '#1C1C1E',
+    padding: 12,
+    borderRadius: 12,
+    backgroundColor: '#F2F2F7',
+    borderWidth: 1,
+    borderColor: '#E5E5EA',
+    minHeight: 100,
+  },
+  notesInputDark: {
+    backgroundColor: '#2C2C2E',
+    borderColor: '#38383A',
+    color: '#FFFFFF',
+  },
+  notesText: {
+    fontSize: 14,
+    color: '#3A3A3C',
+    lineHeight: 20,
+  },
+  notesTextDark: {
+    color: '#D1D1D6',
+  },
+  notesPlaceholder: {
+    color: '#8E8E93',
+  },
+  notesInput: {
+    fontSize: 14,
+    color: '#1C1C1E',
+    padding: 12,
+    borderRadius: 12,
+    backgroundColor: '#F2F2F7',
+    borderWidth: 1,
+    borderColor: '#E5E5EA',
+    minHeight: 100,
+  },
+  notesInputDark: {
+    backgroundColor: '#2C2C2E',
+    borderColor: '#38383A',
+    color: '#FFFFFF',
+  },
+  notesText: {
+    fontSize: 14,
+    color: '#3A3A3C',
+    lineHeight: 20,
+  },
+  notesTextDark: {
+    color: '#D1D1D6',
+  },
+  notesPlaceholder: {
+    color: '#8E8E93',
   },
 });
