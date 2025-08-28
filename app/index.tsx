@@ -1,5 +1,4 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import * as Notifications from 'expo-notifications';
 import React from "react";
 import { Alert, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { useDarkMode } from "./contexts/DarkModeContext";
@@ -32,17 +31,6 @@ interface AssessmentNotes {
   notes: string;
 }
 
-// Configure notification behavior
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowAlert: true,
-    shouldPlaySound: true,
-    shouldSetBadge: false,
-    shouldShowBanner: true,
-    shouldShowList: true,
-  }),
-});
-
 export default function HomePage() {
   // Get today's date
   const today = new Date();
@@ -74,126 +62,6 @@ export default function HomePage() {
   
   // Dark mode from context
   const { isDarkMode } = useDarkMode();
-
-  // Request notification permissions on component mount
-  React.useEffect(() => {
-    requestNotificationPermissions();
-  }, []);
-
-  // Request notification permissions
-  const requestNotificationPermissions = async () => {
-    try {
-      const { status: existingStatus } = await Notifications.getPermissionsAsync();
-      let finalStatus = existingStatus;
-      
-      if (existingStatus !== 'granted') {
-        const { status } = await Notifications.requestPermissionsAsync();
-        finalStatus = status;
-      }
-      
-      if (finalStatus !== 'granted') {
-        Alert.alert(
-          'Notification Permission Required',
-          'Please enable notifications in your device settings to receive assessment reminders.',
-          [{ text: 'OK' }]
-        );
-        return false;
-      }
-      
-      return true;
-    } catch (error) {
-      console.error('Error requesting notification permissions:', error);
-      return false;
-    }
-  };
-
-  // Schedule notification for an assessment
-  const scheduleNotification = async (assessment: Assessment, daysBefore: number, showAlert: boolean = true) => {
-    try {
-      const hasPermission = await requestNotificationPermissions();
-      if (!hasPermission) return;
-
-      // Calculate notification date - IMPORTANT: Parse the date string correctly
-      const submitDateParts = assessment.submit_date.split('-');
-      const submitDate = new Date(
-        parseInt(submitDateParts[0]), // year
-        parseInt(submitDateParts[1]) - 1, // month (0-indexed)
-        parseInt(submitDateParts[2]) // day
-      );
-      
-      // Calculate notification date: submit date MINUS the specified days
-      const notificationDate = new Date(submitDate);
-      notificationDate.setDate(submitDate.getDate() - daysBefore);
-      
-      // Set notification time to 9:00 AM on the notification date
-      notificationDate.setHours(9, 0, 0, 0);
-      
-      // Check if notification date is in the past
-      const now = new Date();
-      if (notificationDate <= now) {
-        console.log(`Notification date ${notificationDate.toDateString()} is in the past, skipping...`);
-        if (showAlert) {
-          Alert.alert(
-            'Notification Not Scheduled',
-            `Cannot schedule notification for ${assessment.name} - the reminder date (${notificationDate.toDateString()}) is in the past.`
-          );
-        }
-        return;
-      }
-
-      // Cancel any existing notifications for this assessment
-      await cancelNotification(assessment.ID);
-
-      // Schedule new notification
-      const notificationId = await Notifications.scheduleNotificationAsync({
-        content: {
-          title: `📚 Assessment Reminder`,
-          body: `${assessment.name} is due in ${daysBefore} day${daysBefore > 1 ? 's' : ''}`,
-          data: { assessmentId: assessment.ID, assessmentName: assessment.name },
-          sound: true,
-        },
-        trigger: {
-          date: notificationDate,
-        } as any,
-      });
-
-      console.log(`✅ Notification scheduled for ${assessment.name}:`);
-      console.log(`   - Submit date: ${submitDate.toDateString()}`);
-      console.log(`   - Notification date: ${notificationDate.toDateString()}`);
-      console.log(`   - Days before: ${daysBefore}`);
-      console.log(`   - Notification ID: ${notificationId}`);
-      
-      // Only show alert if showAlert is true (when first enabling)
-      if (showAlert) {
-        const timeUntilNotification = Math.ceil((notificationDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-        // Removed alert - notifications are now scheduled silently
-      }
-      
-      return notificationId;
-    } catch (error) {
-      console.error('Error scheduling notification:', error);
-      if (showAlert) {
-        Alert.alert('Error', 'Failed to schedule notification');
-      }
-    }
-  };
-
-  // Cancel notification for an assessment
-  const cancelNotification = async (assessmentId: number) => {
-    try {
-      const scheduledNotifications = await Notifications.getAllScheduledNotificationsAsync();
-      const notificationToCancel = scheduledNotifications.find(
-        notification => notification.content.data?.assessmentId === assessmentId
-      );
-      
-      if (notificationToCancel) {
-        await Notifications.cancelScheduledNotificationAsync(notificationToCancel.identifier);
-        console.log(`Notification cancelled for assessment ${assessmentId}`);
-      }
-    } catch (error) {
-      console.error('Error cancelling notification:', error);
-    }
-  };
 
   // Generate 77 days (11 weeks) total: 2 weeks before + 7 weeks visible + 2 weeks after
   const generateCalendarDays = (): CalendarDay[] => {
@@ -383,8 +251,8 @@ export default function HomePage() {
     };
   };
 
-  // Update notification preference
-  const updateNotificationPreference = async (assessmentId: number, updates: Partial<NotificationPreference>) => {
+  // Update notification preference (placeholder for future use)
+  const updateNotificationPreference = (assessmentId: number, updates: Partial<NotificationPreference>) => {
     console.log('Updating notification preference:', { assessmentId, updates });
     
     const newPreferences = notificationPreferences.map(pref => 
@@ -395,19 +263,8 @@ export default function HomePage() {
     
     setNotificationPreferences(newPreferences);
     
-    // Handle notification scheduling/cancellation
-    const assessment = assessments.find(a => a.ID === assessmentId);
-    if (assessment) {
-      if (updates.enabled === true) {
-        // Enable notifications - schedule new notification
-        const daysBefore = updates.daysBefore || getNotificationPreference(assessmentId).daysBefore;
-        await scheduleNotification(assessment, daysBefore, true); // Pass true to show alert
-      } else if (updates.enabled === false) {
-        // Disable notifications - cancel existing notification
-        await cancelNotification(assessmentId);
-      }
-      // Removed automatic scheduling when just changing days - now only shows timing preview
-    }
+    // Placeholder for future notification functionality
+    console.log('Notification preferences updated. Notifications will be implemented in development build.');
   };
 
   // Helper function to check if a date is in the future
@@ -428,34 +285,7 @@ export default function HomePage() {
     }
   };
 
-  // Show all scheduled notifications (for debugging)
-  const showScheduledNotifications = async () => {
-    try {
-      const scheduledNotifications = await Notifications.getAllScheduledNotificationsAsync();
-      console.log('📅 All scheduled notifications:', scheduledNotifications);
-      
-      if (scheduledNotifications.length === 0) {
-        Alert.alert('No Scheduled Notifications', 'You have no scheduled notifications.');
-      } else {
-        const notificationList = scheduledNotifications.map(notification => {
-          const data = notification.content.data;
-          const trigger = notification.trigger as any;
-          return `• ${data?.assessmentName || 'Unknown'} - ${trigger?.date ? new Date(trigger.date).toDateString() : 'Unknown date'}`;
-        }).join('\n');
-        
-        Alert.alert(
-          'Scheduled Notifications',
-          `You have ${scheduledNotifications.length} scheduled notification(s):\n\n${notificationList}`,
-          [{ text: 'OK' }]
-        );
-      }
-    } catch (error) {
-      console.error('Error getting scheduled notifications:', error);
-      Alert.alert('Error', 'Failed to get scheduled notifications');
-    }
-  };
-
-  // Get notification timing info for an assessment
+  // Get notification timing info for an assessment (placeholder)
   const getNotificationTiming = (assessment: Assessment, daysBefore: number) => {
     try {
       const submitDateParts = assessment.submit_date.split('-');
@@ -703,15 +533,6 @@ export default function HomePage() {
                               notificationPref.enabled && isDarkMode && styles.notificationToggleButtonTextActiveDark,
                             ]}>
                               {notificationPref.enabled ? 'Disable' : 'Enable'} Notifications
-                            </Text>
-                          </TouchableOpacity>
-                          
-                          <TouchableOpacity
-                            style={[styles.debugButton, isDarkMode && styles.debugButtonDark]}
-                            onPress={showScheduledNotifications}
-                          >
-                            <Text style={[styles.debugButtonText, isDarkMode && styles.debugButtonTextDark]}>
-                              📅 Debug
                             </Text>
                           </TouchableOpacity>
                         </View>
