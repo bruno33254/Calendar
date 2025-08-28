@@ -544,7 +544,7 @@ export default function HomePage() {
                             Notify me:
                           </Text>
                           <View style={styles.daysSelector}>
-                            {[1, 2, 3, 5, 7].map((days) => (
+                            {[1, 2, 3, 4, 5, 6, 7].map((days) => (
                               <TouchableOpacity
                                 key={days}
                                 style={[
