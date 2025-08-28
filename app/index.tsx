@@ -19,6 +19,12 @@ interface Assessment {
   color: string;
 }
 
+interface NotificationPreference {
+  assessmentId: number;
+  enabled: boolean;
+  daysBefore: number;
+}
+
 export default function HomePage() {
   // Get today's date
   const today = new Date();
@@ -40,6 +46,9 @@ export default function HomePage() {
   const [loading, setLoading] = React.useState(true);
   const [selectedDay, setSelectedDay] = React.useState<CalendarDay | null>(null);
   const [showDetails, setShowDetails] = React.useState(false);
+  
+  // Notification preferences state
+  const [notificationPreferences, setNotificationPreferences] = React.useState<NotificationPreference[]>([]);
   
   // Dark mode from context
   const { isDarkMode } = useDarkMode();
@@ -146,6 +155,13 @@ export default function HomePage() {
       
       if (data.success) {
         setAssessments(data.data);
+        // Initialize notification preferences for new assessments
+        const newPreferences: NotificationPreference[] = data.data.map((assessment: Assessment) => ({
+          assessmentId: assessment.ID,
+          enabled: false,
+          daysBefore: 1,
+        }));
+        setNotificationPreferences(newPreferences);
       } else {
         console.error('Failed to fetch assessments:', data.message);
       }
@@ -172,6 +188,28 @@ export default function HomePage() {
     });
   };
 
+  // Helper function to get notification preference for an assessment
+  const getNotificationPreference = (assessmentId: number): NotificationPreference => {
+    return notificationPreferences.find(pref => pref.assessmentId === assessmentId) || {
+      assessmentId,
+      enabled: false,
+      daysBefore: 1,
+    };
+  };
+
+  // Update notification preference
+  const updateNotificationPreference = (assessmentId: number, updates: Partial<NotificationPreference>) => {
+    console.log('Updating notification preference:', { assessmentId, updates });
+    setNotificationPreferences(prev => {
+      const newPrefs = prev.map(pref => 
+        pref.assessmentId === assessmentId 
+          ? { ...pref, ...updates }
+          : pref
+      );
+      console.log('New preferences:', newPrefs);
+      return newPrefs;
+    });
+  };
 
   // Helper function to check if a date is in the future
   const isFutureDate = (date: Date): boolean => {
@@ -299,30 +337,94 @@ export default function HomePage() {
             </View>
             
             <ScrollView style={styles.modalBody}>
-              {getAssessmentsForDate(selectedDay.date).map((assessment, index) => (
-                <View key={assessment.ID} style={[styles.assessmentCard, isDarkMode && styles.assessmentCardDark]}>
-                  <View style={styles.assessmentHeader}>
-                    <View 
-                      style={[
-                        styles.colorIndicator, 
-                        { backgroundColor: assessment.color }
-                      ]} 
-                    />
-                    <Text style={[styles.assessmentName, isDarkMode && styles.assessmentNameDark]}>{assessment.name}</Text>
-                  </View>
-                  
-                  <Text style={[styles.assessmentDescription, isDarkMode && styles.assessmentDescriptionDark]}>
-                    {assessment.description}
-                  </Text>
-                  
-                  <View style={styles.dateContainer}>
-                    <Text style={[styles.dateLabel, isDarkMode && styles.dateLabelDark]}>📅 Submit Date:</Text>
-                    <Text style={[styles.dateValue, isDarkMode && styles.dateValueDark]}>
-                      {formatDateSimple(assessment.submit_date)}
+              {getAssessmentsForDate(selectedDay.date).map((assessment, index) => {
+                const notificationPref = getNotificationPreference(assessment.ID);
+                return (
+                  <View key={assessment.ID} style={[styles.assessmentCard, isDarkMode && styles.assessmentCardDark]}>
+                    <View style={styles.assessmentHeader}>
+                      <View 
+                        style={[
+                          styles.colorIndicator, 
+                          { backgroundColor: assessment.color }
+                        ]} 
+                      />
+                      <Text style={[styles.assessmentName, isDarkMode && styles.assessmentNameDark]}>{assessment.name}</Text>
+                    </View>
+                    
+                    <Text style={[styles.assessmentDescription, isDarkMode && styles.assessmentDescriptionDark]}>
+                      {assessment.description}
                     </Text>
+                    
+                    <View style={styles.dateContainer}>
+                      <Text style={[styles.dateLabel, isDarkMode && styles.dateLabelDark]}>📅 Submit Date:</Text>
+                      <Text style={[styles.dateValue, isDarkMode && styles.dateValueDark]}>
+                        {formatDateSimple(assessment.submit_date)}
+                      </Text>
+                    </View>
+                    
+                    {/* Notification Settings */}
+                    <View style={styles.notificationContainer}>
+                      <View style={styles.notificationHeader}>
+                        <Text style={[styles.notificationLabel, isDarkMode && styles.notificationLabelDark]}>
+                          🔔 Notifications
+                        </Text>
+                        <TouchableOpacity
+                          style={[
+                            styles.notificationToggleButton,
+                            notificationPref.enabled && styles.notificationToggleButtonActive,
+                            isDarkMode && styles.notificationToggleButtonDark,
+                            notificationPref.enabled && isDarkMode && styles.notificationToggleButtonActiveDark,
+                          ]}
+                          onPress={() => {
+                            console.log('Toggle button pressed for assessment:', assessment.ID);
+                            updateNotificationPreference(assessment.ID, { enabled: !notificationPref.enabled });
+                          }}
+                        >
+                          <Text style={[
+                            styles.notificationToggleButtonText,
+                            notificationPref.enabled && styles.notificationToggleButtonTextActive,
+                            isDarkMode && styles.notificationToggleButtonTextDark,
+                            notificationPref.enabled && isDarkMode && styles.notificationToggleButtonTextActiveDark,
+                          ]}>
+                            {notificationPref.enabled ? 'Disable' : 'Enable'} Notifications
+                          </Text>
+                        </TouchableOpacity>
+                      </View>
+                      
+                      {notificationPref.enabled && (
+                        <View style={styles.daysSelectorContainer}>
+                          <Text style={[styles.daysSelectorLabel, isDarkMode && styles.daysSelectorLabelDark]}>
+                            Notify me:
+                          </Text>
+                          <View style={styles.daysSelector}>
+                            {[1, 2, 3, 5, 7].map((days) => (
+                              <TouchableOpacity
+                                key={days}
+                                style={[
+                                  styles.dayOption,
+                                  notificationPref.daysBefore === days && styles.dayOptionSelected,
+                                  isDarkMode && styles.dayOptionDark,
+                                  notificationPref.daysBefore === days && isDarkMode && styles.dayOptionSelectedDark,
+                                ]}
+                                onPress={() => updateNotificationPreference(assessment.ID, { daysBefore: days })}
+                              >
+                                <Text style={[
+                                  styles.dayOptionText,
+                                  notificationPref.daysBefore === days && styles.dayOptionTextSelected,
+                                  isDarkMode && styles.dayOptionTextDark,
+                                  notificationPref.daysBefore === days && isDarkMode && styles.dayOptionTextSelectedDark,
+                                ]}>
+                                  {days} {days === 1 ? 'day' : 'days'}
+                                </Text>
+                              </TouchableOpacity>
+                            ))}
+                          </View>
+                        </View>
+                      )}
+                    </View>
                   </View>
-                </View>
-              ))}
+                );
+              })}
             </ScrollView>
           </View>
         </View>
@@ -596,6 +698,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    marginBottom: 16,
   },
   dateLabel: {
     fontSize: 14,
@@ -611,6 +714,110 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   dateValueDark: {
+    color: '#FFFFFF',
+  },
+  // Notification styles
+  notificationContainer: {
+    borderTopWidth: 1,
+    borderTopColor: '#E5E5EA',
+    paddingTop: 16,
+  },
+  notificationHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  notificationLabel: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1C1C1E',
+  },
+  notificationLabelDark: {
+    color: '#FFFFFF',
+  },
+  daysSelectorContainer: {
+    marginTop: 8,
+  },
+  daysSelectorLabel: {
+    fontSize: 14,
+    color: '#8E8E93',
+    marginBottom: 8,
+  },
+  daysSelectorLabelDark: {
+    color: '#AEAEB2',
+  },
+  daysSelector: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  dayOption: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    backgroundColor: '#F2F2F7',
+    borderWidth: 1,
+    borderColor: '#E5E5EA',
+  },
+  dayOptionDark: {
+    backgroundColor: '#38383A',
+    borderColor: '#48484A',
+  },
+  dayOptionSelected: {
+    backgroundColor: '#007AFF',
+    borderColor: '#007AFF',
+  },
+  dayOptionSelectedDark: {
+    backgroundColor: '#0A84FF',
+    borderColor: '#0A84FF',
+  },
+  dayOptionText: {
+    fontSize: 12,
+    fontWeight: '500',
+    color: '#8E8E93',
+  },
+  dayOptionTextDark: {
+    color: '#AEAEB2',
+  },
+  dayOptionTextSelected: {
+    color: '#FFFFFF',
+  },
+  dayOptionTextSelectedDark: {
+    color: '#FFFFFF',
+  },
+  notificationToggleButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    backgroundColor: '#F2F2F7',
+    borderWidth: 1,
+    borderColor: '#E5E5EA',
+  },
+  notificationToggleButtonDark: {
+    backgroundColor: '#38383A',
+    borderColor: '#48484A',
+  },
+  notificationToggleButtonActive: {
+    backgroundColor: '#007AFF',
+    borderColor: '#007AFF',
+  },
+  notificationToggleButtonActiveDark: {
+    backgroundColor: '#0A84FF',
+    borderColor: '#0A84FF',
+  },
+  notificationToggleButtonText: {
+    fontSize: 12,
+    fontWeight: '500',
+    color: '#8E8E93',
+  },
+  notificationToggleButtonTextDark: {
+    color: '#AEAEB2',
+  },
+  notificationToggleButtonTextActive: {
+    color: '#FFFFFF',
+  },
+  notificationToggleButtonTextActiveDark: {
     color: '#FFFFFF',
   },
 });
