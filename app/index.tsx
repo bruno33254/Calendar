@@ -405,11 +405,8 @@ export default function HomePage() {
       } else if (updates.enabled === false) {
         // Disable notifications - cancel existing notification
         await cancelNotification(assessmentId);
-      } else if (updates.daysBefore && getNotificationPreference(assessmentId).enabled) {
-        // Only update timing if notifications are already enabled
-        // This prevents scheduling when just changing days without enabling
-        await scheduleNotification(assessment, updates.daysBefore, false); // Pass false to not show alert
       }
+      // Removed automatic scheduling when just changing days - now only shows timing preview
     }
   };
 
