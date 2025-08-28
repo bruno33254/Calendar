@@ -707,15 +707,14 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
     zIndex: 1000,
   },
   modalContent: {
     backgroundColor: '#FFFFFF',
     borderRadius: 16,
-    margin: 20,
-    maxHeight: '80%',
+    marginTop: 20,
+    marginHorizontal: 20,
+    maxHeight: '90%',
     width: '90%',
     shadowColor: '#000',
     shadowOffset: {
@@ -1004,30 +1003,5 @@ const styles = StyleSheet.create({
   notesPlaceholder: {
     color: '#8E8E93',
   },
-  notesInput: {
-    fontSize: 14,
-    color: '#1C1C1E',
-    padding: 12,
-    borderRadius: 12,
-    backgroundColor: '#F2F2F7',
-    borderWidth: 1,
-    borderColor: '#E5E5EA',
-    minHeight: 100,
-  },
-  notesInputDark: {
-    backgroundColor: '#2C2C2E',
-    borderColor: '#38383A',
-    color: '#FFFFFF',
-  },
-  notesText: {
-    fontSize: 14,
-    color: '#3A3A3C',
-    lineHeight: 20,
-  },
-  notesTextDark: {
-    color: '#D1D1D6',
-  },
-  notesPlaceholder: {
-    color: '#8E8E93',
-  },
+
 });
