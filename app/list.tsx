@@ -1,5 +1,5 @@
 import React from "react";
-import { ActivityIndicator, FlatList, SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, FlatList, SafeAreaView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { useDarkMode } from "./contexts/DarkModeContext";
 
 interface Assessment {
@@ -24,6 +24,7 @@ export default function ListScreen() {
   const [assessments, setAssessments] = React.useState<Assessment[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = React.useState('');
 
   const fetchAssessments = async () => {
     try {
@@ -46,6 +47,20 @@ export default function ListScreen() {
   React.useEffect(() => {
     fetchAssessments();
   }, []);
+
+  // Filter assessments based on search query
+  const filteredAssessments = React.useMemo(() => {
+    if (!searchQuery.trim()) {
+      return assessments;
+    }
+    
+    const query = searchQuery.toLowerCase().trim();
+    return assessments.filter(assessment => 
+      assessment.name.toLowerCase().includes(query) ||
+      assessment.description.toLowerCase().includes(query) ||
+      formatDateSimple(assessment.submit_date).includes(query)
+    );
+  }, [assessments, searchQuery]);
 
   const renderItem = ({ item }: { item: Assessment }) => (
     <View style={[styles.card, isDarkMode && styles.cardDark]}>
@@ -74,6 +89,23 @@ export default function ListScreen() {
         </TouchableOpacity>
       </View>
 
+      {/* Search Field */}
+      <View style={[styles.searchContainer, isDarkMode && styles.searchContainerDark]}>
+        <TextInput
+          style={[styles.searchInput, isDarkMode && styles.searchInputDark]}
+          placeholder="Search assessments..."
+          placeholderTextColor={isDarkMode ? '#AEAEB2' : '#8E8E93'}
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+          clearButtonMode="while-editing"
+        />
+        {searchQuery.length > 0 && (
+          <Text style={[styles.searchResultsCount, isDarkMode && styles.searchResultsCountDark]}>
+            {filteredAssessments.length} result{filteredAssessments.length !== 1 ? 's' : ''}
+          </Text>
+        )}
+      </View>
+
       {loading ? (
         <View style={styles.center}>
           <ActivityIndicator size="large" color="#007AFF" />
@@ -87,12 +119,26 @@ export default function ListScreen() {
         </View>
       ) : (
         <FlatList
-          data={assessments}
+          data={filteredAssessments}
           keyExtractor={(item) => String(item.ID)}
           renderItem={renderItem}
           contentContainerStyle={styles.listContent}
           ItemSeparatorComponent={() => <View style={styles.separator} />}
-          ListEmptyComponent={<Text style={styles.emptyText}>No assessments found.</Text>}
+          ListEmptyComponent={
+            <View style={styles.center}>
+              <Text style={[styles.emptyText, isDarkMode && styles.emptyTextDark]}>
+                {searchQuery.trim() ? 'No assessments found matching your search.' : 'No assessments found.'}
+              </Text>
+              {searchQuery.trim() && (
+                <TouchableOpacity 
+                  style={styles.clearSearchBtn}
+                  onPress={() => setSearchQuery('')}
+                >
+                  <Text style={styles.clearSearchText}>Clear Search</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          }
         />
       )}
     </SafeAreaView>
@@ -139,6 +185,42 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontWeight: '600',
   },
+  // Search styles
+  searchContainer: {
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E5EA',
+  },
+  searchContainerDark: {
+    backgroundColor: '#2C2C2E',
+    borderBottomColor: '#38383A',
+  },
+  searchInput: {
+    fontSize: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: '#F2F2F7',
+    borderRadius: 12,
+    color: '#1C1C1E',
+    borderWidth: 1,
+    borderColor: '#E5E5EA',
+  },
+  searchInputDark: {
+    backgroundColor: '#38383A',
+    color: '#FFFFFF',
+    borderColor: '#48484A',
+  },
+  searchResultsCount: {
+    fontSize: 14,
+    color: '#8E8E93',
+    marginTop: 8,
+    textAlign: 'center',
+  },
+  searchResultsCountDark: {
+    color: '#AEAEB2',
+  },
   listContent: {
     padding: 16,
   },
@@ -151,6 +233,9 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.08,
     shadowRadius: 3.84,
     elevation: 3,
+  },
+  cardDark: {
+    backgroundColor: '#2C2C2E',
   },
   cardHeader: {
     flexDirection: 'row',
@@ -169,10 +254,16 @@ const styles = StyleSheet.create({
     color: '#1C1C1E',
     flex: 1,
   },
+  cardTitleDark: {
+    color: '#FFFFFF',
+  },
   cardDescription: {
     fontSize: 15,
     color: '#3A3A3C',
     marginBottom: 12,
+  },
+  cardDescriptionDark: {
+    color: '#D1D1D6',
   },
   cardFooter: {
     flexDirection: 'row',
@@ -184,23 +275,13 @@ const styles = StyleSheet.create({
     color: '#8E8E93',
     fontWeight: '500',
   },
+  cardDateLabelDark: {
+    color: '#AEAEB2',
+  },
   cardDate: {
     fontSize: 15,
     fontWeight: '700',
     color: '#1C1C1E',
-  },
-  // Dark mode overrides for cards
-  cardDark: {
-    backgroundColor: '#2C2C2E',
-  },
-  cardTitleDark: {
-    color: '#FFFFFF',
-  },
-  cardDescriptionDark: {
-    color: '#D1D1D6',
-  },
-  cardDateLabelDark: {
-    color: '#AEAEB2',
   },
   cardDateDark: {
     color: '#FFFFFF',
@@ -212,6 +293,10 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     color: '#8E8E93',
     marginTop: 40,
+    fontSize: 16,
+  },
+  emptyTextDark: {
+    color: '#AEAEB2',
   },
   center: {
     flex: 1,
@@ -229,6 +314,17 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   retryText: {
+    color: '#FFFFFF',
+    fontWeight: '600',
+  },
+  clearSearchBtn: {
+    marginTop: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    backgroundColor: '#007AFF',
+    borderRadius: 8,
+  },
+  clearSearchText: {
     color: '#FFFFFF',
     fontWeight: '600',
   },
